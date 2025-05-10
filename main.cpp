@@ -11,7 +11,7 @@ using namespace std;
 int main() {
     omp_set_num_threads(4);
 
-    int n = 2520;
+    int n = 840;
     cout << "Розмір матриці: " << n << "." << endl;
 
     vector<double> A(n * n);
@@ -27,13 +27,18 @@ int main() {
     auto start = chrono::high_resolution_clock::now();
 
     for (int k = 0; k < n; ++k) {
-        int pivot = k;
         double max_val = fabs(A[k * n + k]);
+        int pivot = k;
+
+        int nthreads = omp_get_max_threads();
+        vector<double> t_max(nthreads, max_val);
+        vector<int> t_piv(nthreads, pivot);
 
         #pragma omp parallel
         {
-            int local_pivot = pivot;
+            int tid = omp_get_thread_num();
             double local_max = max_val;
+            int local_pivot = pivot;
 
             #pragma omp for
             for (int i = k + 1; i < n; ++i) {
@@ -44,11 +49,16 @@ int main() {
                 }
             }
 
-            #pragma omp critical
+            t_max[tid] = local_max;
+            t_piv[tid] = local_pivot;
+
+            #pragma omp single
             {
-                if (local_max > max_val) {
-                    max_val = local_max;
-                    pivot = local_pivot;
+                for (int t = 0; t < nthreads; ++t) {
+                    if (t_max[t] > max_val) {
+                        max_val = t_max[t];
+                        pivot = t_piv[t];
+                    }
                 }
             }
         }
@@ -85,4 +95,6 @@ int main() {
     cout << "Визначник матриці з OpenMP-алгоритму: " << setprecision(10) << det << '.' << endl;
     cout << "Час виконання OpenMP-алгоритму: " << elapsed.count() << " секунд." << endl;
     cout << '\n';
+
+    return 0;
 }
