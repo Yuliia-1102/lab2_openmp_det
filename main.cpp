@@ -9,7 +9,7 @@
 using namespace std;
 
 int main() {
-    omp_set_num_threads(4);
+    omp_set_num_threads(8);
 
     int n = 2520;
     cout << "Розмір матриці: " << n << "." << endl;
