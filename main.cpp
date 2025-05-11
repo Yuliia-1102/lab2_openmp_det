@@ -11,7 +11,7 @@ using namespace std;
 int main() {
     omp_set_num_threads(4);
 
-    int n = 840;
+    int n = 2520;
     cout << "Розмір матриці: " << n << "." << endl;
 
     vector<double> A(n * n);
@@ -51,15 +51,14 @@ int main() {
 
             t_max[tid] = local_max;
             t_piv[tid] = local_pivot;
+        }
 
-            #pragma omp single
-            {
-                for (int t = 0; t < nthreads; ++t) {
-                    if (t_max[t] > max_val) {
-                        max_val = t_max[t];
-                        pivot = t_piv[t];
-                    }
-                }
+        max_val = t_max[0];
+        pivot = t_piv[0];
+        for (int t = 1; t < nthreads; ++t) {
+            if (t_max[t] > max_val) {
+                max_val = t_max[t];
+                pivot = t_piv[t];
             }
         }
 
